@@ -33,7 +33,9 @@ public:
 	bool ProcessMsg(CMsgHead&, const char *, CClientItem *);
 	//bool CheckUserInfo(LPCTSTR, LPCTSTR);
 	//bool SendOtherUserInfo(CClientItem *);
+	std::list<CClientItem*> getClientList();
 
+	bool sendClientId( CClientItem *pClient);
 private:
 	SOCKET m_ListemSock;
 	int m_nPort;

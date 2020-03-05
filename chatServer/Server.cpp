@@ -142,10 +142,118 @@ void CServer::RemoveTargetClient(CClientItem *pItem)
 			delete pItem;
 		}
 	}
-
 }
 bool CServer::ProcessMsg(CMsgHead &msg, const char *pCnt, CClientItem *pClient)
 {
-
+	switch (msg.m_type)
+	{
+	case MSG_TYPE_HEATBATE:
+	{
+			SYSTEMTIME time = { 0 };
+			GetLocalTime(&time);
+			cout << pClient->m_Socket<< "的心跳包:" << time.wHour << ":" << time.wMinute << ":" << time.wSecond << endl;
+			Heatbeat_packet heat_packet;
+			CMsgHead msgHead(MSG_TYPE_HEATBATE, sizeof(Heatbeat_packet));
+			int iHeadSend = SendData(pClient->m_Socket, (char *)&msgHead, sizeof(msgHead));
+			int iBodySend = SendData(pClient->m_Socket, (char *)&heat_packet, sizeof(Heatbeat_packet));
+			if (iHeadSend > 0 && iBodySend > 0)
+			{
+				return true;
+			}
+			else
+			{
+				getServer()->RemoveTargetClient(pClient);
+				cout << "客户端已断开" << endl;
+				return false;
+			}
+	}
+		break;
+	case MSG_TYPE_LOGIN:
+	{
+		CLoginInfo *info = (CLoginInfo *)pCnt;
+		if (strcmp(info->m_User, "abc") == 0 && strcmp(info->m_Pass, "123") == 0)
+		{
+			bool result = true;
+			CMsgHead msgHead(MSG_TYPE_LOGIN, sizeof(bool));
+			int iHeadSend = SendData(pClient->m_Socket, (char *)&msgHead, sizeof(msgHead));
+			int iBodySend = SendData(pClient->m_Socket, (char*)&result, sizeof(bool));
+			if (iHeadSend > 0 && iBodySend > 0)
+			{
+				return true;
+			}
+		}
+		else
+		{
+			bool result = false;
+			CMsgHead msgHead(MSG_TYPE_LOGIN, sizeof(bool));
+			int iHeadSend = SendData(pClient->m_Socket, (char *)&msgHead, sizeof(msgHead));
+			int iBodySend = SendData(pClient->m_Socket, (char*)&result, sizeof(bool));
+			if (iHeadSend > 0 && iBodySend > 0)
+			{
+				return true;
+			}
+			else
+			{
+				getServer()->RemoveTargetClient(pClient);
+				cout << "客户端已断开" << endl;
+				return false;
+			}
+		}
+	}
+		break;
+	case MSG_TYPE_REQUEST_ID:
+	{
+		sendClientId(pClient);
+			//std::list<CClientItem*> m_list = getClientList();
+			//CMsgHead msgHead(MSG_TYPE_REQUEST_ID, sizeof(std::list<CClientItem*>));
+			//int iHeadSend = SendData(pClient->m_Socket, (char *)&msgHead, sizeof(msgHead));
+			//int iBodySend = SendData(pClient->m_Socket, (char*)&m_list, sizeof(std::list<CClientItem*>));
+			//if (iHeadSend > 0 && iBodySend > 0)
+			//{
+			//	return true;
+			//}
+			//else
+			//{
+			//	getServer()->RemoveTargetClient(pClient);
+			//	cout << "客户端已断开" << endl;
+			//	return false;
+			//}
+	}
+		break;
+	}
 	return true;
+}
+
+std::list<CClientItem*> CServer::getClientList()
+{
+	return m_ClientList;
+}
+
+
+bool CServer::sendClientId(CClientItem *pClient)
+{
+	cout << pClient->m_Socket << endl;
+	std::list<CClientItem*> m_list = getClientList();
+
+
+	for (std::list<CClientItem*>::iterator it = m_list.begin(); it != m_list.end(); ++it)
+	{
+		int num = (int)((*it)->m_Socket);
+		CMsgHead msgHead(MSG_TYPE_REQUEST_ID, sizeof(int));
+		int iHeadSend = SendData(pClient->m_Socket, (char *)&msgHead, sizeof(msgHead));
+		int iBodySend = SendData(pClient->m_Socket, (char*)&num, sizeof(int));
+		if (iHeadSend > 0 && iBodySend > 0)
+		{
+			return true;
+		}
+		else
+		{
+			getServer()->RemoveTargetClient(pClient);
+			cout << "客户端已断开" << endl;
+			return false;
+		}
+	}
+
+
+
 }
