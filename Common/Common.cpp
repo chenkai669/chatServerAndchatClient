@@ -65,7 +65,7 @@ bool SOCKET_Select(SOCKET  m_sock)
 	//将套接字设置到集合里
 	FD_SET(m_sock, &fdRead);
 
-	nRet = select(0, &fdRead, NULL, NULL, &tv);
+	nRet = select(0, &fdRead, NULL, NULL, NULL);
 	if (!FD_ISSET(m_sock, &fdRead))//检查 s是否s e t集合的一名成员；如答案是肯定的是，则返回 T R U E。
 	{
 		return false;
